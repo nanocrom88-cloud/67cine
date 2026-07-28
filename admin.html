@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>NoirX — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#07080c; --surface:#101218; --surface2:#161922; --border:rgba(255,255,255,.10);
+    --text:#fff; --muted:rgba(255,255,255,.45); --accent:#e50000; --accent-soft:rgba(229,0,0,.14);
+    --radius:12px;
+  }
+  html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;min-height:100vh}
+  body{font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  button{font-family:inherit;cursor:pointer}
+  input{font-family:inherit}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+
+  /* Login */
+  .login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-card{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px}
+  .brand{font-weight:900;letter-spacing:.14em;font-size:22px;text-align:center;color:#fff}
+  .brand span{color:var(--accent)}
+  .login-sub{color:var(--muted);font-size:11px;letter-spacing:.22em;text-transform:uppercase;text-align:center;margin:8px 0 24px}
+  label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px}
+  .field{width:100%;padding:11px 13px;border-radius:10px;background:var(--bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none;transition:border-color .15s}
+  .field:focus{border-color:rgba(229,0,0,.5)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:10px;font-weight:700;font-size:14px;padding:11px 16px;transition:all .15s}
+  .btn-primary{background:var(--accent);color:#fff;width:100%}
+  .btn-primary:hover{filter:brightness(1.1)}
+  .btn-primary:disabled{opacity:.5;cursor:default}
+  .err{color:#ff5a5a;font-size:12.5px;margin-top:4px}
+
+  /* Header */
+  header{position:sticky;top:0;z-index:20;background:rgba(7,8,12,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+  .header-in{height:56px;display:flex;align-items:center;justify-content:space-between}
+  .header-title{font-weight:700;font-size:15px}
+  .header-title small{display:block;color:var(--muted);font-size:10px;font-weight:400;letter-spacing:.02em}
+  .header-actions{display:flex;align-items:center;gap:12px}
+  .link-muted{color:var(--muted);font-size:13px;text-decoration:none}
+  .link-muted:hover{color:#fff}
+  .btn-ghost{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:600}
+  .btn-ghost:hover{color:#fff}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;padding:4px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;width:fit-content;margin:22px 0;flex-wrap:wrap}
+  .tab{padding:9px 15px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--muted);background:transparent;border:none;transition:all .15s}
+  .tab:hover{color:#fff}
+  .tab.active{background:var(--accent);color:#fff}
+
+  /* Panels */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:20px}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+  .panel-title{font-weight:700;font-size:14px}
+  .panel-desc{color:var(--muted);font-size:12px;margin-top:2px}
+  .panel-body{padding:16px}
+  .info-bar{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-size:12.5px;margin-bottom:16px}
+  .info-bar b{color:var(--accent)}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 14px;color:var(--muted);font-size:11px;font-weight:600;border-bottom:1px solid var(--border)}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--muted)}
+  .truncate{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+  .cell-input{width:100%;padding:7px 9px;border-radius:8px;background:var(--bg);border:1px solid var(--border);color:#fff;font-size:12.5px;outline:none}
+  .cell-input:focus{border-color:rgba(229,0,0,.5)}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end}
+  .icon-btn{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:14px}
+  .icon-btn:hover{color:#fff}
+  .icon-btn.danger:hover{color:#ff5a5a;border-color:rgba(255,90,90,.4)}
+  .icon-btn.go{color:var(--accent)}
+
+  .btn-add{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:9px;background:var(--accent-soft);border:1px solid rgba(229,0,0,.3);color:#ff6a6a;font-size:12.5px;font-weight:700}
+  .btn-add:hover{background:rgba(229,0,0,.22)}
+
+  .seg{display:inline-flex;gap:3px;padding:3px;border-radius:9px;background:var(--surface2);border:1px solid var(--border)}
+  .seg button{padding:6px 12px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--muted);background:transparent;border:none;display:inline-flex;gap:5px;align-items:center}
+  .seg button.active{background:var(--accent);color:#fff}
+
+  .search-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .search-row input{flex:1;min-width:180px;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--border);color:#fff;font-size:14px;outline:none}
+  .search-row input:focus{border-color:rgba(229,0,0,.5)}
+  .btn-search{padding:10px 15px;border-radius:10px;background:var(--accent-soft);border:1px solid rgba(229,0,0,.3);color:#ff6a6a;font-weight:700;font-size:12.5px}
+
+  .poster-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:12px}
+  .poster{aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:var(--surface2);border:2px solid transparent;transition:border-color .15s;position:relative}
+  .poster img{width:100%;height:100%;object-fit:cover;display:block}
+  .poster.click{cursor:pointer}
+  .poster.click:hover{border-color:var(--accent)}
+  .poster-label{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .badge{position:absolute;top:6px;left:6px;right:6px;padding:3px 6px;border-radius:7px;font-size:9.5px;font-weight:700;text-align:center;text-transform:uppercase}
+  .badge.match{background:rgba(229,0,0,.9);color:#fff}
+  .badge.default{background:rgba(30,32,40,.9);color:var(--muted)}
+  .type-tag{padding:2px 6px;border-radius:5px;font-size:10px;font-weight:700}
+  .tag-movie{background:rgba(168,85,247,.2);color:#c489ff}
+  .tag-tv{background:rgba(59,130,246,.2);color:#7db4ff}
+
+  .empty{padding:44px 16px;text-align:center;color:var(--muted);font-size:13px}
+  .loading{display:flex;align-items:center;justify-content:center;padding:44px}
+  .spinner{width:26px;height:26px;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .alert{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:10px;background:rgba(229,0,0,.08);border:1px solid rgba(229,0,0,.3);color:#ff8a8a;font-size:13px;margin-bottom:16px}
+
+  .selbox{display:flex;gap:14px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--accent-soft);border:1px solid rgba(229,0,0,.3);margin-top:14px}
+  .selbox img{width:48px;border-radius:8px;flex-shrink:0}
+  .hidden{display:none!important}
+
+  /* Video preview modal */
+  .vp-overlay{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:20px}
+  .vp-inner{width:100%;max-width:640px;position:relative}
+  .vp-inner video{width:100%;border-radius:14px;display:block}
+  .vp-close{position:absolute;top:-38px;right:0;color:var(--muted);font-size:26px;background:none;border:none}
+  .vp-close:hover{color:#fff}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="login-screen">
+  <div class="login-card">
+    <div class="brand">NOIR<span>X</span></div>
+    <div class="login-sub">Admin Panel</div>
+    <form id="login-form">
+      <div style="margin-bottom:14px">
+        <label>Email</label>
+        <input class="field" type="email" id="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+      <div style="margin-bottom:18px">
+        <label>Password</label>
+        <input class="field" type="password" id="password" autocomplete="current-password" required placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" type="submit" id="login-btn">Sign in</button>
+      <p class="err hidden" id="login-err"></p>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header>
+    <div class="wrap header-in">
+      <div class="header-title">Admin Panel<small>Intro &amp; Home Manager</small></div>
+      <div class="header-actions">
+        <a class="link-muted" href="index.html" target="_blank">View site ↗</a>
+        <button class="btn-ghost" id="logout">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <button class="tab active" data-tab="intros">Company Intros</button>
+      <button class="tab" data-tab="overrides">★ Content Overrides</button>
+      <button class="tab" data-tab="sections">▦ Home Sections</button>
+      <button class="tab" data-tab="locker">⚙ Locker</button>
+      <button class="tab" data-tab="preview">↻ Content Preview</button>
+    </div>
+
+    <div id="tab-intros"></div>
+    <div id="tab-overrides" class="hidden"></div>
+    <div id="tab-sections" class="hidden"></div>
+    <div id="tab-locker" class="hidden"></div>
+    <div id="tab-preview" class="hidden"></div>
+  </div>
+</div>
+
+<div id="vp-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="noirx-supabase.js"></script>
+<script>
+(function(){
+  'use strict';
+  var TMDB_KEY = '76f5b20391ff39408d52881f31d48412';
+  var sb = window.nxsb;
+  var esc = function(s){var d=document.createElement('div');d.textContent=(s==null?'':String(s));return d.innerHTML;};
+  var el = function(id){return document.getElementById(id);};
+
+  // ── Video preview ──────────────────────────────────────────
+  window.previewVideo = function(url){
+    if(!url) return;
+    el('vp-root').innerHTML =
+      '<div class="vp-overlay" onclick="closePreview()">' +
+        '<div class="vp-inner" onclick="event.stopPropagation()">' +
+          '<button class="vp-close" onclick="closePreview()">×</button>' +
+          '<video src="'+esc(url)+'" autoplay controls></video>' +
+        '</div></div>';
+  };
+  window.closePreview = function(){ el('vp-root').innerHTML=''; };
+
+  // ── Auth ───────────────────────────────────────────────────
+  function showApp(){ el('login').classList.add('hidden'); el('app').classList.remove('hidden'); renderTab('intros'); }
+  function showLogin(){ el('app').classList.add('hidden'); el('login').classList.remove('hidden'); }
+
+  el('login-form').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var btn=el('login-btn'), err=el('login-err');
+    err.classList.add('hidden');
+    btn.disabled=true; btn.textContent='Signing in…';
+    var res = await sb.auth.signInWithPassword({ email: el('email').value.trim(), password: el('password').value });
+    btn.disabled=false; btn.textContent='Sign in';
+    if(res.error){ err.textContent='Invalid email or password.'; err.classList.remove('hidden'); return; }
+    showApp();
+  });
+
+  el('logout').addEventListener('click', async function(){ await sb.auth.signOut(); showLogin(); });
+
+  // ── Tabs ───────────────────────────────────────────────────
+  var tabEls = { intros: el('tab-intros'), overrides: el('tab-overrides'), sections: el('tab-sections'), locker: el('tab-locker'), preview: el('tab-preview') };
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+      t.classList.add('active');
+      Object.keys(tabEls).forEach(function(k){ tabEls[k].classList.add('hidden'); });
+      tabEls[t.dataset.tab].classList.remove('hidden');
+      renderTab(t.dataset.tab);
+    });
+  });
+  function renderTab(name){
+    if(name==='intros') renderIntros();
+    else if(name==='overrides') renderOverrides();
+    else if(name==='sections') renderSections();
+    else if(name==='locker') renderLocker();
+    else if(name==='preview') renderPreview();
+  }
+
+  function loadingHTML(){ return '<div class="loading"><div class="spinner"></div></div>'; }
+  function alertHTML(msg){ return '<div class="alert">⚠ <div>'+esc(msg)+'</div></div>'; }
+
+  // ── TMDB search helper ─────────────────────────────────────
+  async function tmdbSearch(type, query){
+    var r = await fetch('https://api.themoviedb.org/3/search/'+type+'?api_key='+TMDB_KEY+'&query='+encodeURIComponent(query)+'&page=1');
+    var d = await r.json();
+    return (d.results||[]).slice(0,12).map(function(it){
+      return { id:it.id, title:it.title||it.name||'Unknown', poster_path:it.poster_path, media_type:type };
+    });
+  }
+  function img(path, size){ return path ? 'https://image.tmdb.org/t/p/'+(size||'w92')+path : ''; }
+
+  /* ════════════════ TAB 1 · COMPANY INTROS ════════════════ */
+  async function renderIntros(){
+    var root = tabEls.intros;
+    root.innerHTML = loadingHTML();
+    var res = await Promise.all([
+      sb.from('company_intros').select('*').order('company_name'),
+      sb.from('default_intro').select('*').eq('id',1).single()
+    ]);
+    if(res[0].error){ root.innerHTML = alertHTML('DB error: '+res[0].error.message); return; }
+    var rows = res[0].data || [];
+    var def = res[1].data || { intro_url:'' };
+
+    var html = '';
+    html += '<div class="panel"><div class="panel-body">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+        '<div><div class="panel-title">Default Intro</div><div class="panel-desc">Plays when no company or content match is found</div></div>' +
+        '<div class="row-actions">' +
+          '<button class="icon-btn go" onclick="previewVideo('+JSON.stringify(def.intro_url||'')+')" title="Preview">▶</button>' +
+          '<button class="icon-btn" id="def-edit" title="Edit">✎</button>' +
+        '</div></div>' +
+      '<input class="field" id="def-url" value="'+esc(def.intro_url||'')+'" disabled>' +
+      '<div id="def-save-row" class="hidden" style="margin-top:8px;text-align:right">' +
+        '<button class="btn-add" id="def-save">Save default</button></div>' +
+      '</div></div>';
+
+    html += '<div class="panel"><div class="panel-head">' +
+      '<div class="panel-title">Company Intros ('+rows.length+')</div>' +
+      '<button class="btn-add" id="add-company">+ Add Company</button></div>' +
+      '<div style="overflow-x:auto"><table><thead><tr>' +
+        '<th>Company Name</th><th>Label</th><th>Intro URL</th><th style="text-align:right">Actions</th>' +
+      '</tr></thead><tbody id="company-tbody">' + companyRows(rows) + '</tbody></table></div></div>';
+
+    root.innerHTML = html;
+
+    // default edit toggle
+    el('def-edit').onclick = function(){
+      el('def-url').disabled = false; el('def-url').focus();
+      el('def-save-row').classList.remove('hidden');
+    };
+    el('def-save').onclick = async function(){
+      var btn=this; btn.disabled=true;
+      var r = await sb.from('default_intro').upsert({ id:1, intro_url: el('def-url').value.trim(), updated_at: new Date().toISOString() });
+      if(r.error){ alert('Save failed: '+r.error.message); btn.disabled=false; return; }
+      renderIntros();
+    };
+    el('add-company').onclick = function(){ addCompanyRow(); };
+    bindCompanyRowActions(rows);
+  }
+
+  function companyRows(rows){
+    if(!rows.length) return '<tr><td colspan="4" class="empty">No company intros yet.</td></tr>';
+    return rows.map(function(r){
+      return '<tr data-id="'+r.id+'">' +
+        '<td><span class="cn">'+esc(r.company_name)+'</span></td>' +
+        '<td><span class="lb">'+esc(r.label||'—')+'</span></td>' +
+        '<td><span class="truncate mono">'+esc(r.intro_url)+'</span></td>' +
+        '<td><div class="row-actions">' +
+          '<button class="icon-btn go" data-act="prev" title="Preview">▶</button>' +
+          '<button class="icon-btn" data-act="edit" title="Edit">✎</button>' +
+          '<button class="icon-btn danger" data-act="del" title="Delete">🗑</button>' +
+        '</div></td></tr>';
+    }).join('');
+  }
+
+  function bindCompanyRowActions(rows){
+    var map={}; rows.forEach(function(r){map[r.id]=r;});
+    el('company-tbody').querySelectorAll('tr[data-id]').forEach(function(tr){
+      var id = +tr.dataset.id, row = map[id];
+      var act = function(name){ return tr.querySelector('[data-act="'+name+'"]'); };
+      if(act('prev')) act('prev').onclick=function(){ previewVideo(row.intro_url); };
+      if(act('del')) act('del').onclick=async function(){
+        if(!confirm('Delete this entry?')) return;
+        var r=await sb.from('company_intros').delete().eq('id',id);
+        if(r.error){ alert('Delete failed: '+r.error.message); return; }
+        renderIntros();
+      };
+      if(act('edit')) act('edit').onclick=function(){
+        tr.innerHTML =
+          '<td><input class="cell-input" id="e-name" value="'+esc(row.company_name)+'"></td>' +
+          '<td><input class="cell-input" id="e-label" value="'+esc(row.label||'')+'"></td>' +
+          '<td><input class="cell-input mono" id="e-url" value="'+esc(row.intro_url)+'"></td>' +
+          '<td><div class="row-actions">' +
+            '<button class="icon-btn go" id="e-save">✓</button>' +
+            '<button class="icon-btn" id="e-cancel">×</button></div></td>';
+        el('e-save').onclick=async function(){
+          var payload={ company_name:el('e-name').value.trim(), label:el('e-label').value.trim(), intro_url:el('e-url').value.trim() };
+          if(!payload.company_name||!payload.intro_url){ alert('Company name and URL are required'); return; }
+          var r=await sb.from('company_intros').update(payload).eq('id',id);
+          if(r.error){ alert('Save failed: '+r.error.message); return; }
+          renderIntros();
+        };
+        el('e-cancel').onclick=function(){ renderIntros(); };
+      };
+    });
+  }
+
+  function addCompanyRow(){
+    var tb = el('company-tbody');
+    if(el('new-company-row')) return;
+    var tr = document.createElement('tr');
+    tr.id='new-company-row';
+    tr.innerHTML =
+      '<td><input class="cell-input" id="n-name" placeholder="e.g. Marvel Studios"></td>' +
+      '<td><input class="cell-input" id="n-label" placeholder="e.g. Marvel"></td>' +
+      '<td><input class="cell-input mono" id="n-url" placeholder="https://…/marvel.mp4"></td>' +
+      '<td><div class="row-actions">' +
+        '<button class="icon-btn go" id="n-save">✓</button>' +
+        '<button class="icon-btn" id="n-cancel">×</button></div></td>';
+    if(tb.querySelector('.empty')) tb.innerHTML='';
+    tb.insertBefore(tr, tb.firstChild);
+    el('n-name').focus();
+    el('n-save').onclick=async function(){
+      var payload={ company_name:el('n-name').value.trim(), label:el('n-label').value.trim(), intro_url:el('n-url').value.trim() };
+      if(!payload.company_name||!payload.intro_url){ alert('Company name and URL are required'); return; }
+      var r=await sb.from('company_intros').insert(payload);
+      if(r.error){ alert('Add failed: '+r.error.message); return; }
+      renderIntros();
+    };
+    el('n-cancel').onclick=function(){ renderIntros(); };
+  }
+
+  /* ════════════════ TAB 2 · CONTENT OVERRIDES ════════════════ */
+  var ovState = { type:'movie', results:[], selected:null };
+  async function renderOverrides(){
+    var root = tabEls.overrides;
+    root.innerHTML = loadingHTML();
+    var res = await sb.from('content_intros').select('*').order('created_at',{ascending:false});
+    if(res.error){ root.innerHTML = alertHTML('DB error: '+res.error.message); return; }
+    var rows = res.data || [];
+
+    root.innerHTML =
+      '<div class="info-bar">★ <div>Content overrides take <b>top priority</b> — a specific intro for a specific movie or show, overriding any company match.</div></div>' +
+      '<div class="panel"><div class="panel-body">' +
+        '<div class="panel-title" style="margin-bottom:12px">Add Content Override</div>' +
+        '<div class="search-row">' +
+          '<div class="seg"><button data-t="movie" class="active">🎬 Movie</button><button data-t="tv">📺 TV</button></div>' +
+          '<input id="ov-q" placeholder="Search movies…">' +
+          '<button class="btn-search" id="ov-search">Search</button>' +
+        '</div>' +
+        '<div id="ov-results"></div>' +
+        '<div id="ov-selected"></div>' +
+      '</div></div>' +
+      '<div class="panel"><div class="panel-head"><div>' +
+        '<div class="panel-title">Active Overrides ('+rows.length+')</div>' +
+        '<div class="panel-desc">These play before any company or default intro</div></div></div>' +
+        '<div style="overflow-x:auto"><table><thead><tr>' +
+          '<th>Title</th><th>Type</th><th>ID</th><th>Intro URL</th><th style="text-align:right">Actions</th>' +
+        '</tr></thead><tbody id="ov-tbody">'+overrideRows(rows)+'</tbody></table></div></div>';
+
+    root.querySelectorAll('.seg button').forEach(function(b){
+      b.onclick=function(){
+        ovState.type=b.dataset.t;
+        root.querySelectorAll('.seg button').forEach(function(x){x.classList.remove('active');});
+        b.classList.add('active');
+        el('ov-q').placeholder='Search '+(ovState.type==='movie'?'movies':'TV shows')+'…';
+      };
+    });
+    el('ov-search').onclick=doOvSearch;
+    el('ov-q').addEventListener('keydown',function(e){ if(e.key==='Enter') doOvSearch(); });
+    bindOverrideRowActions(rows);
+  }
+
+  async function doOvSearch(){
+    var q=el('ov-q').value.trim(); if(!q) return;
+    el('ov-results').innerHTML=loadingHTML();
+    ovState.results = await tmdbSearch(ovState.type, q);
+    el('ov-results').innerHTML =
+      '<div style="color:var(--muted);font-size:12px;margin:8px 0">Click a title to select</div>' +
+      '<div class="poster-grid">' + ovState.results.map(function(it,i){
+        return '<div><div class="poster click" data-i="'+i+'">'+(it.poster_path?'<img src="'+img(it.poster_path,'w185')+'">':'')+'</div>' +
+          '<div class="poster-label">'+esc(it.title)+'</div></div>';
+      }).join('') + '</div>';
+    el('ov-results').querySelectorAll('.poster.click').forEach(function(p){
+      p.onclick=function(){ ovState.selected=ovState.results[+p.dataset.i]; renderOvSelected(); };
+    });
+  }
+
+  function renderOvSelected(){
+    var s=ovState.selected; if(!s){ el('ov-selected').innerHTML=''; return; }
+    el('ov-selected').innerHTML =
+      '<div class="selbox">' +
+        (s.poster_path?'<img src="'+img(s.poster_path,'w92')+'">':'') +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">' +
+            '<b>'+esc(s.title)+'</b>' +
+            '<span class="type-tag '+(s.media_type==='tv'?'tag-tv':'tag-movie')+'">'+(s.media_type==='tv'?'TV':'Movie')+'</span>' +
+            '<span class="mono">ID '+s.id+'</span></div>' +
+          '<div class="search-row" style="margin:0">' +
+            '<input id="ov-url" placeholder="https://…/custom.mp4" style="flex:1">' +
+            '<button class="btn-search" id="ov-save">Save</button></div>' +
+        '</div></div>';
+    el('ov-save').onclick=async function(){
+      var url=el('ov-url').value.trim(); if(!url) return;
+      var payload={ content_id:s.id, content_type:s.media_type, title:s.title, poster_path:s.poster_path||null, intro_url:url };
+      var r=await sb.from('content_intros').upsert(payload, { onConflict:'content_id,content_type' });
+      if(r.error){
+        // fallback if no unique constraint: manual check
+        var ex=await sb.from('content_intros').select('id').eq('content_id',s.id).eq('content_type',s.media_type).maybeSingle();
+        if(ex.data){ r=await sb.from('content_intros').update({intro_url:url}).eq('id',ex.data.id); }
+        else { r=await sb.from('content_intros').insert(payload); }
+        if(r.error){ alert('Save failed: '+r.error.message); return; }
+      }
+      ovState.selected=null;
+      renderOverrides();
+    };
+  }
+
+  function overrideRows(rows){
+    if(!rows.length) return '<tr><td colspan="5" class="empty">No content overrides yet.</td></tr>';
+    return rows.map(function(r){
+      return '<tr data-id="'+r.id+'">' +
+        '<td><div style="display:flex;gap:10px;align-items:center">'+(r.poster_path?'<img src="'+img(r.poster_path)+'" style="width:30px;border-radius:5px">':'')+'<span>'+esc(r.title)+'</span></div></td>' +
+        '<td><span class="type-tag '+(r.content_type==='tv'?'tag-tv':'tag-movie')+'">'+(r.content_type==='tv'?'TV':'Movie')+'</span></td>' +
+        '<td><span class="mono">'+r.content_id+'</span></td>' +
+        '<td><span class="truncate mono">'+esc(r.intro_url)+'</span></td>' +
+        '<td><div class="row-actions">' +
+          '<button class="icon-btn go" data-act="prev">▶</button>' +
+          '<button class="icon-btn" data-act="edit">✎</button>' +
+          '<button class="icon-btn danger" data-act="del">🗑</button>' +
+        '</div></td></tr>';
+    }).join('');
+  }
+
+  function bindOverrideRowActions(rows){
+    var map={}; rows.forEach(function(r){map[r.id]=r;});
+    el('ov-tbody').querySelectorAll('tr[data-id]').forEach(function(tr){
+      var id=+tr.dataset.id, row=map[id];
+      var q=function(n){return tr.querySelector('[data-act="'+n+'"]');};
+      if(q('prev')) q('prev').onclick=function(){ previewVideo(row.intro_url); };
+      if(q('del')) q('del').onclick=async function(){
+        if(!confirm('Remove this override?')) return;
+        var r=await sb.from('content_intros').delete().eq('id',id);
+        if(r.error){ alert('Delete failed: '+r.error.message); return; }
+        renderOverrides();
+      };
+      if(q('edit')) q('edit').onclick=function(){
+        var cell=tr.children[3];
+        cell.innerHTML='<input class="cell-input mono" id="oe-url" value="'+esc(row.intro_url)+'">';
+        tr.children[4].querySelector('.row-actions').innerHTML=
+          '<button class="icon-btn go" id="oe-save">✓</button><button class="icon-btn" id="oe-cancel">×</button>';
+        el('oe-save').onclick=async function(){
+          var r=await sb.from('content_intros').update({intro_url:el('oe-url').value.trim()}).eq('id',id);
+          if(r.error){ alert('Save failed: '+r.error.message); return; }
+          renderOverrides();
+        };
+        el('oe-cancel').onclick=function(){ renderOverrides(); };
+      };
+    });
+  }
+
+  /* ════════════════ TAB 3 · HOME SECTIONS ════════════════ */
+  var SECTIONS = [
+    { key:'hero',            label:'Hero Slider',      desc:'Full-screen hero at the top of the homepage' },
+    { key:'trending_week',   label:'Trending This Week', desc:'"Trending This Week" row' },
+    { key:'trending_today',  label:'Trending Today',   desc:'"Trending Today" row' },
+    { key:'popular_movies',  label:'Popular Movies',   desc:'"Popular Movies" row' }
+  ];
+  var secState = { active:'trending_week', type:'movie', results:[], items:[] };
+
+  async function renderSections(){
+    var root = tabEls.sections;
+    root.innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="sec-picker">' +
+        SECTIONS.map(function(s){
+          return '<button class="tab '+(s.key===secState.active?'active':'')+'" data-k="'+s.key+'" style="border:1px solid var(--border)">'+esc(s.label)+'</button>';
+        }).join('') +
+      '</div>' +
+      '<div class="info-bar" id="sec-desc">▦ <div></div></div>' +
+      '<div class="panel"><div class="panel-body">' +
+        '<div class="panel-title" style="margin-bottom:12px">Add to <span style="color:var(--accent)" id="sec-name"></span></div>' +
+        '<div class="search-row">' +
+          '<div class="seg"><button data-t="movie" class="active">🎬 Movie</button><button data-t="tv">📺 TV</button></div>' +
+          '<input id="sec-q" placeholder="Search movies…">' +
+          '<button class="btn-search" id="sec-search">Search</button></div>' +
+        '<div id="sec-results"></div>' +
+      '</div></div>' +
+      '<div class="panel"><div class="panel-head"><div class="panel-title" id="sec-count"></div></div>' +
+        '<div id="sec-list"></div></div>';
+
+    el('sec-picker').querySelectorAll('[data-k]').forEach(function(b){
+      b.onclick=function(){ secState.active=b.dataset.k; secState.results=[]; renderSections(); };
+    });
+    root.querySelectorAll('.seg button').forEach(function(b){
+      b.onclick=function(){ secState.type=b.dataset.t;
+        root.querySelectorAll('.seg button').forEach(function(x){x.classList.remove('active');}); b.classList.add('active');
+        el('sec-q').placeholder='Search '+(secState.type==='movie'?'movies':'TV shows')+'…'; };
+    });
+    el('sec-search').onclick=doSecSearch;
+    el('sec-q').addEventListener('keydown',function(e){ if(e.key==='Enter') doSecSearch(); });
+
+    var meta = SECTIONS.filter(function(s){return s.key===secState.active;})[0];
+    el('sec-desc').querySelector('div').innerHTML = esc(meta.desc)+'. Changes take effect on next page load.';
+    el('sec-name').textContent = meta.label;
+
+    await loadSecItems();
+  }
+
+  async function loadSecItems(){
+    el('sec-list').innerHTML=loadingHTML();
+    var res=await sb.from('home_sections').select('*').eq('section_key',secState.active).order('sort_order');
+    if(res.error){ el('sec-list').innerHTML=alertHTML('DB error: '+res.error.message); return; }
+    secState.items=res.data||[];
+    el('sec-count').textContent = SECTIONS.filter(function(s){return s.key===secState.active;})[0].label+' — '+secState.items.length+' items';
+    if(!secState.items.length){ el('sec-list').innerHTML='<div class="empty">No items yet. Search above to add content.</div>'; return; }
+    el('sec-list').innerHTML = secState.items.map(function(it,i){
+      return '<div style="display:flex;gap:12px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border)" data-id="'+it.id+'" data-i="'+i+'">' +
+        '<span class="mono" style="width:22px;text-align:center">'+(i+1)+'</span>' +
+        (it.poster_path?'<img src="'+img(it.poster_path)+'" style="width:30px;height:45px;object-fit:cover;border-radius:5px">':'<div style="width:30px;height:45px;border-radius:5px;background:var(--surface2)"></div>') +
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600" class="truncate">'+esc(it.title||('ID '+it.content_id))+'</div>' +
+          '<div style="margin-top:2px"><span class="type-tag '+(it.content_type==='tv'?'tag-tv':'tag-movie')+'">'+(it.content_type==='tv'?'TV':'Movie')+'</span> <span class="mono">ID '+it.content_id+'</span></div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:3px">' +
+          '<button class="icon-btn" data-act="up" '+(i===0?'disabled style="opacity:.3"':'')+'>▲</button>' +
+          '<button class="icon-btn" data-act="down" '+(i===secState.items.length-1?'disabled style="opacity:.3"':'')+'>▼</button>' +
+        '</div>' +
+        '<button class="icon-btn danger" data-act="rm">🗑</button>' +
+      '</div>';
+    }).join('');
+    el('sec-list').querySelectorAll('[data-id]').forEach(function(rowEl){
+      var id=+rowEl.dataset.id, i=+rowEl.dataset.i;
+      rowEl.querySelector('[data-act="rm"]').onclick=async function(){
+        if(!confirm('Remove this item?')) return;
+        var r=await sb.from('home_sections').delete().eq('id',id);
+        if(r.error){ alert('Delete failed: '+r.error.message); return; }
+        loadSecItems();
+      };
+      var up=rowEl.querySelector('[data-act="up"]'), dn=rowEl.querySelector('[data-act="down"]');
+      if(up) up.onclick=function(){ move(i,-1); };
+      if(dn) dn.onclick=function(){ move(i,1); };
+    });
+  }
+
+  async function move(i,dir){
+    var j=i+dir; if(j<0||j>=secState.items.length) return;
+    var a=secState.items[i], b=secState.items[j];
+    await Promise.all([
+      sb.from('home_sections').update({sort_order:b.sort_order}).eq('id',a.id),
+      sb.from('home_sections').update({sort_order:a.sort_order}).eq('id',b.id)
+    ]);
+    loadSecItems();
+  }
+
+  async function doSecSearch(){
+    var q=el('sec-q').value.trim(); if(!q) return;
+    el('sec-results').innerHTML=loadingHTML();
+    secState.results=await tmdbSearch(secState.type,q);
+    el('sec-results').innerHTML = secState.results.map(function(it,i){
+      var added = secState.items.some(function(x){return x.content_id===it.id;});
+      return '<div style="display:flex;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px">' +
+        (it.poster_path?'<img src="'+img(it.poster_path)+'" style="width:30px;height:45px;object-fit:cover;border-radius:5px">':'<div style="width:30px;height:45px;border-radius:5px;background:var(--surface2)"></div>') +
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600" class="truncate">'+esc(it.title)+'</div>' +
+          '<div class="mono" style="margin-top:2px">'+(it.media_type==='tv'?'TV':'Movie')+' · ID '+it.id+'</div></div>' +
+        '<button class="btn-add" data-i="'+i+'" '+(added?'disabled style="opacity:.5"':'')+'>'+(added?'✓ Added':'+ Add')+'</button>' +
+      '</div>';
+    }).join('');
+    el('sec-results').querySelectorAll('.btn-add:not([disabled])').forEach(function(btn){
+      btn.onclick=async function(){
+        var it=secState.results[+btn.dataset.i];
+        var nextOrder = secState.items.length ? Math.max.apply(null, secState.items.map(function(x){return x.sort_order;}))+1 : 0;
+        var r=await sb.from('home_sections').insert({ section_key:secState.active, content_id:it.id, content_type:it.media_type, title:it.title, poster_path:it.poster_path, sort_order:nextOrder });
+        if(r.error){ alert('Add failed: '+r.error.message); return; }
+        btn.textContent='✓ Added'; btn.disabled=true; btn.style.opacity=.5;
+        loadSecItems();
+      };
+    });
+  }
+
+  /* ════════════════ TAB · LOCKER SETTINGS ════════════════ */
+  function lkField(label,id,type,val,ph,hint){
+    return '<div><label>'+esc(label)+'</label>' +
+      '<input class="field" id="'+id+'" type="'+type+'" value="'+esc(val)+'" placeholder="'+esc(ph||'')+'">' +
+      (hint?'<div style="color:var(--muted);font-size:12px;margin-top:6px">'+hint+'</div>':'') + '</div>';
+  }
+  async function renderLocker(){
+    var root = tabEls.locker;
+    root.innerHTML = loadingHTML();
+    var res = await sb.from('site_config').select('*').eq('id',1).single();
+    if(res.error){ root.innerHTML = alertHTML('DB error: '+res.error.message); return; }
+    var c = res.data || {};
+    root.innerHTML =
+      '<div class="info-bar">⚙ <div>Controls the content locker across the NoirX site. Changes take effect on the next page load. <b>Test mode</b> unlocks with fake leads for previewing — set it back to Off for real visitors.</div></div>' +
+      '<div class="panel"><div class="panel-body" style="display:flex;flex-direction:column;gap:16px">' +
+        lkField('Redirect base URL','lc-base','text', c.player_base_url||'', 'https://cineby.at',
+          'On unlock the viewer is sent to <b style="color:var(--accent)">{base}/movie/{id}</b> or <b style="color:var(--accent)">{base}/tv/{id}</b>.') +
+        lkField('Offers required to unlock','lc-offers','number', c.required_offers!=null?c.required_offers:2, '2',
+          'How many offers the visitor must complete before the redirect fires.') +
+        lkField('Locker delay (seconds)','lc-delay','number', c.locker_delay!=null?c.locker_delay:5, '5',
+          'How long the intro plays before the locker appears.') +
+        '<div><label>Test mode</label>' +
+          '<select class="field" id="lc-test">' +
+            '<option value="0"'+((c.locker_testing==1)?'':' selected')+'>Off — real offers</option>' +
+            '<option value="1"'+((c.locker_testing==1)?' selected':'')+'>On — fake test leads</option>' +
+          '</select></div>' +
+        '<div><label>Locker heading text</label>' +
+          '<textarea class="field" id="lc-text" rows="3" style="resize:vertical">'+esc(c.locker_text||'Install one of our sponsor apps below to continue watching {title}.')+'</textarea>' +
+          '<div style="color:var(--muted);font-size:12px;margin-top:6px">Use <b style="color:var(--accent)">{title}</b> where the movie/show name should appear.</div></div>' +
+        '<div style="text-align:right"><button class="btn-add" id="lc-save">Save locker settings</button></div>' +
+      '</div></div>';
+    el('lc-save').onclick = async function(){
+      var btn=this; btn.disabled=true; btn.textContent='Saving…';
+      var payload = {
+        id:1,
+        player_base_url: el('lc-base').value.trim(),
+        required_offers: Math.max(1, parseInt(el('lc-offers').value)||1),
+        locker_delay: Math.max(0, parseInt(el('lc-delay').value)||0),
+        locker_testing: parseInt(el('lc-test').value)||0,
+        locker_text: el('lc-text').value,
+        updated_at: new Date().toISOString()
+      };
+      var r = await sb.from('site_config').upsert(payload);
+      if(r.error){ alert('Save failed: '+r.error.message); btn.disabled=false; btn.textContent='Save locker settings'; return; }
+      btn.textContent='✓ Saved';
+      setTimeout(function(){ renderLocker(); }, 900);
+    };
+  }
+
+  /* ════════════════ TAB 4 · CONTENT PREVIEW ════════════════ */
+  async function renderPreview(){
+    var root=tabEls.preview;
+    root.innerHTML='<div class="loading"><div class="spinner"></div></div>';
+    // ensure intro config loaded for resolution
+    await window.NXIntro.loadIntroConfig();
+    var tr = await fetch('https://api.themoviedb.org/3/trending/all/week?api_key='+TMDB_KEY).then(function(r){return r.json();}).then(function(d){return (d.results||[]).slice(0,18);}).catch(function(){return [];});
+    var detailed = await Promise.all(tr.map(async function(it){
+      var isTV = it.media_type==='tv' || !!it.first_air_date;
+      var type = isTV?'tv':'movie';
+      try{
+        var d=await fetch('https://api.themoviedb.org/3/'+type+'/'+it.id+'?api_key='+TMDB_KEY).then(function(r){return r.json();});
+        return { id:it.id, type:type, title:it.title||it.name||'Unknown', poster:it.poster_path, companies:d.production_companies||[] };
+      }catch(e){ return { id:it.id, type:type, title:it.title||it.name||'Unknown', poster:it.poster_path, companies:[] }; }
+    }));
+    root.innerHTML =
+      '<div class="info-bar">↻ <div>Top trending titles and which intro resolves for each (content override → company match → default).</div></div>' +
+      '<div class="poster-grid" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">' +
+      detailed.map(function(it){
+        var url = window.NXIntro.resolveOverride(it.id, it.type, it.companies);
+        var isDefault = !url;
+        if(!url) url = window.NXIntro.getDefault() || '';
+        var company = (it.companies[0]&&it.companies[0].name) || 'Unknown';
+        return '<div><div class="poster">'+(it.poster?'<img src="'+img(it.poster,'w342')+'">':'') +
+          '<div class="badge '+(isDefault?'default':'match')+'">'+(isDefault?'Default':'Custom')+'</div>' +
+          (url?'<div style="position:absolute;inset:0;background:rgba(0,0,0,.55);opacity:0;display:flex;align-items:center;justify-content:center;transition:opacity .15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0"><button class="btn-add" onclick="previewVideo('+JSON.stringify(url)+')">▶ Preview</button></div>':'') +
+          '</div>' +
+          '<div class="poster-label">'+esc(it.title)+'<br><span class="mono">'+esc(company)+'</span></div></div>';
+      }).join('') + '</div>';
+  }
+
+  // ── Boot ───────────────────────────────────────────────────
+  (async function(){
+    if(!sb){ el('login-err').textContent='Supabase failed to load.'; el('login-err').classList.remove('hidden'); return; }
+    var s = await sb.auth.getSession();
+    if(s.data && s.data.session) showApp(); else showLogin();
+  })();
+})();
+</script>
+</body>
+</html>

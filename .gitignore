@@ -1,0 +1,7 @@
+.DS_Store
+.vite/
+node_modules/
+*.log
+
+# Intro clips are hosted externally — not deployed via this repo
+vids/
