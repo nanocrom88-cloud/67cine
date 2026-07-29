@@ -1391,6 +1391,11 @@
     position: absolute; inset: 0;
     background-size: cover; background-position: center;
     filter: brightness(0.38);
+    transition: opacity 0.4s ease;
+  }
+  /* Phone: once playback starts, black out the backdrop so the contained video sits on clean black */
+  @media (max-width: 640px) {
+    .fp-overlay.fp-playing .fp-bg { opacity: 0; }
   }
   .fp-grain {
     position: absolute; inset: 0;
@@ -2244,7 +2249,7 @@ document.addEventListener('keydown', e => {
 <!-- ── FAKE PLAYER ── -->
 <div class="fp-overlay" id="fp-overlay">
   <div id="fp-bg" class="fp-bg"></div>
-  <video id="fp-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;" playsinline></video>
+  <video id="fp-video" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:1;" playsinline></video>
   <div class="fp-grain"></div>
 
   <!-- double-tap zones -->
@@ -2346,7 +2351,7 @@ document.addEventListener('keydown', e => {
   function upUI(){const p=vdur?(vpos/vdur)*100:0;fi.style.width=p+'%';dt.style.left=p+'%';bu.style.width=Math.min(100,p+6)+'%';tm.textContent=fmt(vpos)+' / '+fmt(vdur)}
   function setPlayIcon(on){pi.innerHTML=on?'<rect x="6" y="4" width="4" height="16" fill="#fff"/><rect x="14" y="4" width="4" height="16" fill="#fff"/>':'<polygon points="5 3 19 12 5 21 5 3" fill="#fff"/>'}
   function vtick(now){if(vplaying&&!drag){const dt=Math.min(1,(now-vlast)/1000);vpos=Math.min(vdur,vpos+dt);if(vpos>=vdur){vpos=vdur;vplaying=false;vid.pause();setPlayIcon(false)}}vlast=now;upUI();vraf=requestAnimationFrame(vtick)}
-  function setPlaying(on){vplaying=on;vlast=performance.now();if(on){vid.play().catch(()=>{})}else{vid.pause()}setPlayIcon(on);showUI()}
+  function setPlaying(on){vplaying=on;vlast=performance.now();if(on){vid.play().catch(()=>{});ov.classList.add('fp-playing')}else{vid.pause();ov.classList.remove('fp-playing')}setPlayIcon(on);showUI()}
   // Skip in virtual (movie) seconds
   function skipV(d){vpos=Math.max(0,Math.min(vdur,vpos+d));upUI()}
   // UI is driven by the virtual clock (vtick), not the clip's own timeupdate
@@ -2370,7 +2375,7 @@ document.addEventListener('keydown', e => {
   function dtap(zone,ripple,dir){let taps=0,timer=null;zone.addEventListener('touchend',()=>{taps++;if(taps===1){timer=setTimeout(()=>{taps=0;setPlaying(!vplaying)},240)}else{clearTimeout(timer);taps=0;skipV(dir==='r'?10:-10);ripple.classList.add('show');setTimeout(()=>ripple.classList.remove('show'),500)}})}
   dtap(tl,rl,'l');dtap(trR,rr,'r');
   document.addEventListener('keydown',e=>{if(!ov.classList.contains('open'))return;if(e.target.tagName==='INPUT')return;switch(e.key){case' ':case'k':e.preventDefault();setPlaying(!vplaying);break;case'ArrowLeft':e.preventDefault();skipV(-10);showUI();break;case'ArrowRight':e.preventDefault();skipV(10);showUI();break;case'ArrowUp':e.preventDefault();vs.value=Math.min(100,+vs.value+10);vid.volume=+vs.value/100;showUI();break;case'ArrowDown':e.preventDefault();vs.value=Math.max(0,+vs.value-10);vid.volume=+vs.value/100;showUI();break;case'm':case'M':mu.click();break;case'f':case'F':fs.click();break}});
-  cb.addEventListener('click',window.closePlayer=function(){vplaying=false;if(vraf)cancelAnimationFrame(vraf);vraf=null;vid.pause();vid.src='';ov.classList.remove('open');document.body.style.overflow='';if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})});
+  cb.addEventListener('click',window.closePlayer=function(){vplaying=false;if(vraf)cancelAnimationFrame(vraf);vraf=null;vid.pause();vid.src='';ov.classList.remove('open','fp-playing');document.body.style.overflow='';if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})});
   function pickSrc(companies){
     const map=[
       {file:'marvel',keys:['marvel']},
@@ -2390,6 +2395,7 @@ document.addEventListener('keydown', e => {
     for(const entry of map){for(const name of names){if(entry.keys.some(k=>name.includes(k)))return'vids/'+entry.file+'.mp4'}}
     return'vids/universal.mp4';
   }
+  window.__fpPause=function(){setPlaying(false)};
   window.openPlayer=function(title,subtitle,bdUrl,runtimeSecs){
     const fp=window.__fp||{};
     // Show the real movie/episode runtime, not the short intro clip's length
@@ -2426,6 +2432,7 @@ document.addEventListener('keydown', e => {
   function showLockerNow() {
     if (window._adblueUnlocked) return;
     cancelTimer();
+    if (window.__fpPause) window.__fpPause();
     var fp = window.__fp || {};
     window.currentSeries = { title: fp.title, poster: fp.posterUrl };
     var locker = window.initAdBlueLocker();
