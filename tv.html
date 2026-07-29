@@ -552,23 +552,23 @@ load(true).then(()=>{const ov=document.getElementById('loading-overlay');ov.clas
         rl=document.getElementById('fp-rip-l'),rr=document.getElementById('fp-rip-r'),
         ui=document.getElementById('fp-ui'),ce=document.getElementById('fp-center'),bo=document.getElementById('fp-bottom');
   let ht=null,drag=false,muted=false,vdur=6120;
+  // Virtual clock: timeline advances in real time across the full runtime, decoupled from the intro clip.
+  let vpos=0,vplaying=false,vlast=0,vraf=null;
   const fmt=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`:`${m}:${String(sc).padStart(2,'0')}`};
-  function upUI(){const dur=vid.duration||0,cur=vid.currentTime||0,frac=dur?cur/dur:0,p=frac*100,bl=vid.buffered.length?vid.buffered.end(vid.buffered.length-1):0,bp=dur?(bl/dur)*100:0;fi.style.width=p+'%';dt.style.left=p+'%';bu.style.width=bp+'%';tm.textContent=fmt(frac*vdur)+' / '+fmt(vdur)}
-  function skipV(d){const dur=vid.duration||0;if(!dur)return;const cv=(vid.currentTime/dur)*vdur,nv=Math.max(0,Math.min(vdur,cv+d));vid.currentTime=(nv/vdur)*dur;upUI()}
-  vid.addEventListener('timeupdate',()=>{if(!drag)upUI()});
-  vid.addEventListener('progress',upUI);
-  vid.addEventListener('play',()=>{pi.innerHTML='<rect x="6" y="4" width="4" height="16" fill="#fff"/><rect x="14" y="4" width="4" height="16" fill="#fff"/>'});
-  vid.addEventListener('pause',()=>{pi.innerHTML='<polygon points="5 3 19 12 5 21 5 3" fill="#fff"/>'});
-  vid.addEventListener('ended',()=>{pi.innerHTML='<polygon points="5 3 19 12 5 21 5 3" fill="#fff"/>'});
-  function showUI(){ui.style.opacity=ce.style.opacity=bo.style.opacity='1';ui.style.pointerEvents=ce.style.pointerEvents=bo.style.pointerEvents='';clearTimeout(ht);if(!vid.paused)ht=setTimeout(hideUI,3200)}
+  function upUI(){const p=vdur?(vpos/vdur)*100:0;fi.style.width=p+'%';dt.style.left=p+'%';bu.style.width=Math.min(100,p+6)+'%';tm.textContent=fmt(vpos)+' / '+fmt(vdur)}
+  function setPlayIcon(on){pi.innerHTML=on?'<rect x="6" y="4" width="4" height="16" fill="#fff"/><rect x="14" y="4" width="4" height="16" fill="#fff"/>':'<polygon points="5 3 19 12 5 21 5 3" fill="#fff"/>'}
+  function vtick(now){if(vplaying&&!drag){const dt=Math.min(1,(now-vlast)/1000);vpos=Math.min(vdur,vpos+dt);if(vpos>=vdur){vpos=vdur;vplaying=false;vid.pause();setPlayIcon(false)}}vlast=now;upUI();vraf=requestAnimationFrame(vtick)}
+  function setPlaying(on){vplaying=on;vlast=performance.now();if(on){vid.play().catch(()=>{})}else{vid.pause()}setPlayIcon(on);showUI()}
+  function skipV(d){vpos=Math.max(0,Math.min(vdur,vpos+d));upUI()}
+  function showUI(){ui.style.opacity=ce.style.opacity=bo.style.opacity='1';ui.style.pointerEvents=ce.style.pointerEvents=bo.style.pointerEvents='';clearTimeout(ht);if(vplaying)ht=setTimeout(hideUI,3200)}
   function hideUI(){ui.style.opacity=ce.style.opacity=bo.style.opacity='0';ui.style.pointerEvents=ce.style.pointerEvents=bo.style.pointerEvents='none'}
   ov.addEventListener('mousemove',showUI);ov.addEventListener('touchstart',showUI,{passive:true});
-  ov.addEventListener('click',e=>{if(e.target===ov||e.target===bg||e.target===vid){showUI();if(!vid.paused)hideUI()}});
-  pb.addEventListener('click',()=>{vid.paused?vid.play():vid.pause();showUI()});
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target===bg||e.target===vid){showUI();if(vplaying)hideUI()}});
+  pb.addEventListener('click',()=>{setPlaying(!vplaying)});
   rw.addEventListener('click',()=>{skipV(-10);showUI()});
   fw.addEventListener('click',()=>{skipV(10);showUI()});
   function frac(e){const r=pr.getBoundingClientRect(),cx=e.touches?e.touches[0].clientX:e.clientX;return Math.max(0,Math.min(1,(cx-r.left)/r.width))}
-  function seek(f){if(vid.duration)vid.currentTime=f*vid.duration;upUI()}
+  function seek(f){vpos=f*vdur;upUI()}
   pr.addEventListener('mousedown',e=>{drag=true;seek(frac(e))});
   pr.addEventListener('touchstart',e=>{drag=true;seek(frac(e))},{passive:true});
   pr.addEventListener('mousemove',e=>{const f=frac(e);tp.textContent=fmt(f*vdur);tp.style.left=(f*100)+'%';if(drag)seek(f)});
@@ -577,10 +577,10 @@ load(true).then(()=>{const ov=document.getElementById('loading-overlay');ov.clas
   mu.addEventListener('click',()=>{muted=!muted;vid.muted=muted;vi.innerHTML=muted?'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>':'<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';showUI()});
   vs.addEventListener('input',()=>{vid.volume=+vs.value/100;muted=vid.volume===0;vid.muted=muted;showUI()});
   fs.addEventListener('click',()=>{const el=document.getElementById('fp-overlay');if(!document.fullscreenElement&&!document.webkitFullscreenElement)(el.requestFullscreen||el.webkitRequestFullscreen).call(el);else(document.exitFullscreen||document.webkitExitFullscreen).call(document)});
-  function dtap(zone,ripple,dir){let taps=0,timer=null;zone.addEventListener('touchend',()=>{taps++;if(taps===1){timer=setTimeout(()=>{taps=0;vid.paused?vid.play():vid.pause();showUI()},240)}else{clearTimeout(timer);taps=0;skipV(dir==='r'?10:-10);ripple.classList.add('show');setTimeout(()=>ripple.classList.remove('show'),500)}})}
+  function dtap(zone,ripple,dir){let taps=0,timer=null;zone.addEventListener('touchend',()=>{taps++;if(taps===1){timer=setTimeout(()=>{taps=0;setPlaying(!vplaying)},240)}else{clearTimeout(timer);taps=0;skipV(dir==='r'?10:-10);ripple.classList.add('show');setTimeout(()=>ripple.classList.remove('show'),500)}})}
   dtap(tl,rl,'l');dtap(trR,rr,'r');
-  document.addEventListener('keydown',e=>{if(!ov.classList.contains('open'))return;if(e.target.tagName==='INPUT')return;switch(e.key){case' ':case'k':e.preventDefault();vid.paused?vid.play():vid.pause();showUI();break;case'ArrowLeft':e.preventDefault();skipV(-10);showUI();break;case'ArrowRight':e.preventDefault();skipV(10);showUI();break;case'ArrowUp':e.preventDefault();vs.value=Math.min(100,+vs.value+10);vid.volume=+vs.value/100;showUI();break;case'ArrowDown':e.preventDefault();vs.value=Math.max(0,+vs.value-10);vid.volume=+vs.value/100;showUI();break;case'm':case'M':mu.click();break;case'f':case'F':fs.click();break}});
-  cb.addEventListener('click',window.closePlayer=function(){vid.pause();vid.src='';ov.classList.remove('open');document.body.style.overflow='';if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})});
+  document.addEventListener('keydown',e=>{if(!ov.classList.contains('open'))return;if(e.target.tagName==='INPUT')return;switch(e.key){case' ':case'k':e.preventDefault();setPlaying(!vplaying);break;case'ArrowLeft':e.preventDefault();skipV(-10);showUI();break;case'ArrowRight':e.preventDefault();skipV(10);showUI();break;case'ArrowUp':e.preventDefault();vs.value=Math.min(100,+vs.value+10);vid.volume=+vs.value/100;showUI();break;case'ArrowDown':e.preventDefault();vs.value=Math.max(0,+vs.value-10);vid.volume=+vs.value/100;showUI();break;case'm':case'M':mu.click();break;case'f':case'F':fs.click();break}});
+  cb.addEventListener('click',window.closePlayer=function(){vplaying=false;if(vraf)cancelAnimationFrame(vraf);vraf=null;vid.pause();vid.src='';ov.classList.remove('open');document.body.style.overflow='';if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})});
   function pickSrc(companies){
     const map=[
       {file:'marvel',keys:['marvel']},
@@ -607,10 +607,12 @@ load(true).then(()=>{const ov=document.getElementById('loading-overlay');ov.clas
     const src=dbSrc||pickSrc(fp.productionCompanies);
     ti.textContent=title||'';su.textContent=subtitle||'';
     bg.style.backgroundImage=bdUrl?`url(${bdUrl})`:'none';
-    vid.src=src;vid.load();
+    vid.src=src;vid.loop=true;vid.load();
+    vpos=0;vplaying=false;
     ov.classList.add('open');document.body.style.overflow='hidden';
     upUI();showUI();
-    setTimeout(()=>{vid.volume=+vs.value/100;vid.play().catch(()=>{})},300);
+    if(!vraf)vraf=requestAnimationFrame(vtick);
+    setTimeout(()=>{vid.volume=+vs.value/100;setPlaying(true)},300);
   };
 })();
 </script>
