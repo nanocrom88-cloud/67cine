@@ -2159,7 +2159,7 @@ function openModal(id, mediaType) {
 
     if (isTV) {
       const seasons = (d.seasons || []).filter(s => s.season_number > 0);
-      if (seasons.length) loadSeason(d.id, seasons[0].season_number);
+      if (seasons.length) loadSeason(d.id, seasons[seasons.length - 1].season_number);
     }
   }).catch(() => {
     inner.innerHTML = `<div style="padding:40px;text-align:center;color:var(--muted)">Failed to load details.</div>`;
