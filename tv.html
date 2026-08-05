@@ -187,6 +187,7 @@ footer{padding:36px 36px 40px;border-top:1px solid var(--liquid-border);display:
 .modal-ep-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .modal-ep-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#1e1e1e}
 .modal-ep-thumb-placeholder svg{width:24px;height:24px;opacity:.3}
+.modal-ep-thumb img.ep-thumb-fallback{filter:brightness(.5)}
 .modal-ep-play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.3);opacity:0;transition:opacity .2s}
 .modal-episode:hover .modal-ep-play-overlay{opacity:1}
 .modal-ep-play-overlay svg{width:20px;height:20px;fill:#fff}
@@ -520,8 +521,8 @@ async function loadSeason(sid,snum){
   try{
     const data=await tmdb(`/tv/${sid}/season/${snum}`);const eps=data.episodes||[];
     if(!eps.length){list.innerHTML=`<div class="modal-ep-loading">No episodes.</div>`;return}
-    list.innerHTML=eps.map(ep=>{const thumb=ep.still_path?`https://image.tmdb.org/t/p/w300${ep.still_path}`:null,rt=ep.runtime?`${ep.runtime}m`:'',ad=(ep.air_date||'').slice(0,4),meta=[rt,ad].filter(Boolean).join(' · ');
-      return `<button class="modal-episode" onclick="event.stopPropagation();openEpisode(${snum},${ep.episode_number},'${(ep.name||'Episode '+ep.episode_number).replace(/'/g,"\\'")}',${ep.runtime?ep.runtime*60:2700})"><div class="modal-ep-thumb">${thumb?`<img src="${thumb}" loading="lazy">`:`<div class="modal-ep-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>`}<div class="modal-ep-play-overlay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><span class="modal-ep-num">E${ep.episode_number}</span></div><div class="modal-ep-info"><div class="modal-ep-title">${ep.name||'Episode '+ep.episode_number}</div>${meta?`<div class="modal-ep-meta">${meta}</div>`:''} ${ep.overview?`<div class="modal-ep-desc">${ep.overview}</div>`:''}</div></button>`;
+    list.innerHTML=eps.map(ep=>{const thumb=ep.still_path?`https://image.tmdb.org/t/p/w300${ep.still_path}`:null,showBd=(window.__fp&&window.__fp.backdropUrl)?window.__fp.backdropUrl.replace('/original/','/w300/'):'',rt=ep.runtime?`${ep.runtime}m`:'',ad=(ep.air_date||'').slice(0,4),meta=[rt,ad].filter(Boolean).join(' · ');
+      return `<button class="modal-episode" onclick="event.stopPropagation();openEpisode(${snum},${ep.episode_number},'${(ep.name||'Episode '+ep.episode_number).replace(/'/g,"\\'")}',${ep.runtime?ep.runtime*60:2700})"><div class="modal-ep-thumb">${thumb?`<img src="${thumb}" loading="lazy">`:showBd?`<img class="ep-thumb-fallback" src="${showBd}" loading="lazy">`:`<div class="modal-ep-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>`}<div class="modal-ep-play-overlay"><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></div><span class="modal-ep-num">E${ep.episode_number}</span></div><div class="modal-ep-info"><div class="modal-ep-title">${ep.name||'Episode '+ep.episode_number}</div>${meta?`<div class="modal-ep-meta">${meta}</div>`:''} ${ep.overview?`<div class="modal-ep-desc">${ep.overview}</div>`:''}</div></button>`;
     }).join('');
   }catch{list.innerHTML=`<div class="modal-ep-loading">Failed to load.</div>`}
 }

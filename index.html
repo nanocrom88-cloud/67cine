@@ -1312,6 +1312,7 @@
     background: #1e1e1e;
   }
   .modal-ep-thumb-placeholder svg { width: 24px; height: 24px; opacity: 0.3; }
+  .modal-ep-thumb img.ep-thumb-fallback { filter: brightness(0.5); }
 
   .modal-ep-play-overlay {
     position: absolute;
@@ -2186,6 +2187,8 @@ async function loadSeason(seriesId, seasonNum) {
     }
     list.innerHTML = episodes.map(ep => {
       const thumb = ep.still_path ? `https://image.tmdb.org/t/p/w300${ep.still_path}` : null;
+      // Fallback to the show's backdrop (lighter w300) for episodes with no still yet (unreleased)
+      const showBd = (window.__fp && window.__fp.backdropUrl) ? window.__fp.backdropUrl.replace('/original/', '/w300/') : '';
       const epRuntime = ep.runtime ? `${ep.runtime}m` : '';
       const airDate = (ep.air_date || '').slice(0, 4);
       const meta = [epRuntime, airDate].filter(Boolean).join(' · ');
@@ -2194,7 +2197,9 @@ async function loadSeason(seriesId, seasonNum) {
           <div class="modal-ep-thumb">
             ${thumb
               ? `<img src="${thumb}" alt="E${ep.episode_number}" loading="lazy">`
-              : `<div class="modal-ep-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>`}
+              : showBd
+                ? `<img class="ep-thumb-fallback" src="${showBd}" alt="E${ep.episode_number}" loading="lazy">`
+                : `<div class="modal-ep-thumb-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>`}
             <div class="modal-ep-play-overlay">
               <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </div>
