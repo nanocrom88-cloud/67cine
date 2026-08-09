@@ -1392,10 +1392,9 @@
     position: absolute; inset: 0;
     background-size: cover; background-position: center;
     filter: brightness(0.38);
-    transition: opacity 0.4s ease;
   }
-  /* Once playback starts, black out the backdrop so the video sits on clean black (all screens) */
-  .fp-overlay.fp-playing .fp-bg { opacity: 0; }
+  /* No backdrop behind the player video — always black, whether playing or paused */
+  .fp-overlay.open .fp-bg { opacity: 0; }
   .fp-grain {
     position: absolute; inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
